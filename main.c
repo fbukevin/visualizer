@@ -13,13 +13,14 @@
 #define NVIC_INTERRUPTx_PRIORITY ( ( volatile unsigned char *) 0xE000E400 )
 
 int logfile = 0;
+int shareread = 0, sharewrite = 0;
 
 int syscall(int number, ...) __attribute__((naked));
 
 int open(const char *pathname, int flags);
 int close(int fildes);
 size_t write(int fildes, const void *buf, size_t nbyte);
-
+size_t read(int fildes, void *buf, size_t nbyte);
 volatile xQueueHandle serial_str_queue = NULL;
 volatile xSemaphoreHandle serial_tx_wait_sem = NULL;
 volatile xQueueHandle serial_rx_queue = NULL;
@@ -201,9 +202,37 @@ void serial_readwrite_task(void *pvParameters)
 	}
 }
 
+void mutex_task(xSemaphoreHandle mutex){
+
+	portBASE_TYPE until;
+	char buf[128];
+	
+	while(1){
+
+		while(!xSemaphoreTake(mutex, portMAX_DELAY));	// wait for semaphore released
+
+		/* delay task for a while */
+		until = xTaskGetTickCount() + 5;
+		while(xTaskGetTickCount() < until);	
+
+		read(shareread, buf, 128);
+		write(sharewrite, buf, 128);
+
+		xSemaphoreGive(mutex);				// release semaphore
+		until = xTaskGetTickCount() + 3;
+		while(xTaskGetTickCount() < until);
+		
+		//vTaskDelay(100);
+	}
+}
+
 int main()
 {
 	logfile = open("log", 4);
+
+	shareread = open("share", 3); 	// flag 3 may be read I guess
+	sharewrite = open("wshare", 4); // while 4 is able to write at all
+	
 
 	init_led();
 
@@ -247,6 +276,18 @@ int main()
 	            (signed portCHAR *) "Serial Read/Write",
 	            512 /* stack size */, NULL,
 	            tskIDLE_PRIORITY + 10, NULL);
+
+	/* Create two periodic task to read and write shared file */
+	xSemaphoreHandle mutex = xSemaphoreCreateMutex();
+	xTaskCreate(mutex_task, 
+		    (signed portCHAR *) "Task 1",
+		    512 /* stack size */, mutex,
+		    tskIDLE_PRIORITY + 1, NULL);
+	
+	xTaskCreate(mutex_task, 
+		    (signed portCHAR *) "Task 2",
+		    512 /* stack size */, mutex,
+		    tskIDLE_PRIORITY + 1, NULL);
 
 	/* Start running the tasks. */
 	vTaskStartScheduler();
@@ -477,6 +518,13 @@ size_t write(int fildes, const void *buf, size_t nbyte)
 {
 	int argv[] = { fildes, (int) buf, nbyte };
 	return nbyte - syscall(0x05, argv);
+}
+
+size_t read(int fildes, void *buf, size_t nbyte)
+{
+	int argv[] = { fildes, (int) buf, nbyte };
+	return nbyte - syscall(0x06, argv);
+
 }
 
 int get_current_interrupt_number()
