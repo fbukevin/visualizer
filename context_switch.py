@@ -24,5 +24,5 @@ log.close()
 cost = open('cost', 'w')
 # grasp = open('sched.grasp', w') # maybe grasp could display context switch cost, not yet study
 for overhead in context_switch:
-	cost.write('switch from %s to %s cost %f seconds\n' % (overhead['out'], overhead['in'], overhead['duration']))
+	cost.write('switch from %s to %s cost %f microseconds\n' % (overhead['out'], overhead['in'], overhead['duration']))
 cost.close()
