@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+import matplotlib.pyplot as plt
+
 log = open('log', 'r')
 lines = log.readlines()
+
+fig, ax = plt.subplots()
+bar = 5
 
 context_switch = [] 
 tasks = {}
@@ -50,15 +55,27 @@ cost.close()
 
 times = open('times', 'w')
 for id in tasks:
+	serial = []
 	r = 0
 	try:
 		while r < tasks[id]['round']:
-			times.write('on %f %s in\n' % (tasks[id][str(r) +'in'], tasks[id]['name']))
-			times.write('on %f %s out\n' % (tasks[id][str(r) + 'out'], tasks[id]['name']))
+			#times.write('on %f %s in\n' % (tasks[id][str(r) +'in'], tasks[id]['name']))
+			#times.write('on %f %s out\n' % (tasks[id][str(r) + 'out'], tasks[id]['name']))
 			tasks[id][str(r) + 'elapse'] = tasks[id][str(r) + 'out'] - tasks[id][str(r) + 'in']
-			times.write('elapse %f\n' % (tasks[id][str(r) + 'elapse']))
+			#times.write('elapse %f\n' % (tasks[id][str(r) + 'elapse']))
+			serial.append((tasks[id][str(r) + 'in'], tasks[id][str(r) + 'elapse']))
 			r += 1
+		ax.broken_barh(serial, (bar, 5), facecolors='blue')
+		bar += 10
 	except:
 		pass
 times.close()
 
+ax.set_ylim(0, 100)
+ax.set_xlim(0, 4000)
+ax.set_xlabel('time elapse')
+#ax.set_yticks([])
+#ax.set_yticklabels(['', ''])
+ax.grid(False)
+
+plt.show()
