@@ -55,7 +55,10 @@ for id in tasks:
 		while r < tasks[id]['round']:
 			times.write('on %f %s in\n' % (tasks[id][str(r) +'in'], tasks[id]['name']))
 			times.write('on %f %s out\n' % (tasks[id][str(r) + 'out'], tasks[id]['name']))
+			tasks[id][str(r) + 'elapse'] = tasks[id][str(r) + 'out'] - tasks[id][str(r) + 'in']
+			times.write('elapse %f\n' % (tasks[id][str(r) + 'elapse']))
 			r += 1
 	except:
 		pass
 times.close()
+
