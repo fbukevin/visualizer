@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 log = open('log', 'r')
 lines = log.readlines()
 
+# prepare for plotting
 fig, ax = plt.subplots()
 bar = 5
+label = []
+label_axes = []
 
 context_switch = [] 
 tasks = {}
@@ -66,6 +69,8 @@ for id in tasks:
 			serial.append((tasks[id][str(r) + 'in'], tasks[id][str(r) + 'elapse']))
 			r += 1
 		ax.broken_barh(serial, (bar, 5), facecolors='blue')
+		label.append((tasks[id]['name']))
+		label_axes.append((float(bar) + 2.5))
 		bar += 10
 	except:
 		pass
@@ -74,8 +79,8 @@ times.close()
 ax.set_ylim(0, 100)
 ax.set_xlim(0, 4000)
 ax.set_xlabel('time elapse')
-#ax.set_yticks([])
-#ax.set_yticklabels(['', ''])
+ax.set_yticks(label_axes)
+ax.set_yticklabels(label)
 ax.grid(False)
 
 plt.show()
